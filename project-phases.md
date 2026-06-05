@@ -62,12 +62,12 @@ Tasks:
 **Goal:** Turn raw research into a structured, scene-by-scene plan.
 
 Tasks:
-- [ ] Define the `video-plan.json` schema (documented inline): `meta` (title, theme, totalDurationTarget), `scenes[]` where each scene has `{ id, type, durationInFrames, title, narration, bullets, codeBlocks?, assetRefs[] }`.
-- [ ] Write `scripts/ingest.ts`: parse `topic-details.md` (sections: What it is / Why it matters / How it's done) and map them into a logical long-form arc: Intro → What → Why → How (multi-step) → Recap → Outro.
-- [ ] Distribute durations to hit the 8–15 min target (≈14,400–27,000 frames at 30fps); ensure pacing per scene type.
-- [ ] For each "How" step, decide scene type (Concept / Diagram / Code / Comparison).
-- [ ] Populate `assetRefs` with placeholders that Phase 4 will turn into prompts.
-- [ ] Validate output against the schema; fail loudly on malformed `topic-details.md`.
+- [x] Define the `video-plan.json` schema (documented inline): `meta` (title, theme, totalDurationTarget), `scenes[]` where each scene has `{ id, type, durationInFrames, title, narration, bullets, codeBlocks?, assetRefs[] }`.
+- [x] Write `scripts/ingest.ts`: parse `topic-details.md` (sections: What it is / Why it matters / How it's done) and map them into a logical long-form arc: Intro → What → Why → How (multi-step) → Recap → Outro.
+- [x] Distribute durations to hit the 8–15 min target (≈14,400–27,000 frames at 30fps); ensure pacing per scene type.
+- [x] For each "How" step, decide scene type (Concept / Diagram / Code / Comparison).
+- [x] Populate `assetRefs` with placeholders that Phase 4 will turn into prompts.
+- [x] Validate output against the schema; fail loudly on malformed `topic-details.md`.
 
 **Exit criteria:** Running `npm run ingest` on a sample Penetration Testing `topic-details.md` produces a valid `video-plan.json` with a coherent scene list and sane durations.
 
