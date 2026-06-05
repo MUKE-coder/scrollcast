@@ -82,14 +82,17 @@ For every `assetRef` in `video-plan.json`, this writes two prompt files (one per
 npm run assets:gen
 ```
 
-For each prompt file: the script checks the cache (sha256 vs `public/assets/manifest.json`), calls the Gemini Imagen REST endpoint, decodes the base64 PNG, and writes it to `public/assets/{theme}/<id>.png`. On API errors it retries 3× with exponential backoff (1s/3s/8s); persistent failures fall back to an SVG placeholder so the render never crashes. Re-running is free: cached entries are skipped.
+For each prompt file: the script checks the cache (sha256 vs `public/assets/manifest.json`), calls the Gemini image-generation REST endpoint, decodes the returned PNG, and writes it to `public/assets/{theme}/<id>.png`. On API errors it retries 3× with exponential backoff (1s/3s/8s); persistent failures fall back to an SVG placeholder so the render never crashes. Re-running is free: cached entries are skipped.
+
+The default model is `gemini-2.5-flash-image-preview`, called via `:generateContent` — this works on any standard Gemini API key. The script auto-detects the API path from the model name: `gemini-*` → `:generateContent`, `imagen-*` → `:predict` (Imagen requires a paid-tier key with Imagen enabled).
 
 Useful flags:
 ```bash
-npm run assets:gen -- --force                       # ignore cache, regenerate everything
-npm run assets:gen -- --theme=apple                 # only one theme
-npm run assets:gen -- --dry-run                     # placeholder mode, no API calls
-npm run assets:gen -- --model=imagen-4.0-generate-001  # override the model
+npm run assets:gen -- --force                              # ignore cache, regenerate everything
+npm run assets:gen -- --theme=apple                        # only one theme
+npm run assets:gen -- --dry-run                            # placeholder mode, no API calls
+npm run assets:gen -- --model=imagen-3.0-generate-002      # switch to Imagen 3 (paid Imagen access required)
+npm run assets:gen -- --model=gemini-2.5-flash-image       # GA Gemini image-gen
 ```
 
 ### Step 8 — Preview in Remotion Studio
@@ -130,7 +133,7 @@ ScrollCast does **not** generate audio. Two slots exist:
 | `npm run render:both` | Both theme renders, sequentially |
 | `npm run ingest` | `topic-details.md` → `src/video-plan.json` |
 | `npm run assets:prompts` | `video-plan.json` → `assets/prompts/*.json` (32 files for the sample) |
-| `npm run assets:gen` | prompts → Gemini Imagen → `public/assets/{theme}/*` (cached; falls back to SVG placeholders without `GEMINI_API_KEY`) |
+| `npm run assets:gen` | prompts → Gemini image-gen (default `gemini-2.5-flash-image-preview`) → `public/assets/{theme}/*` (cached; falls back to SVG placeholders without `GEMINI_API_KEY`) |
 | `npm run lint` | `eslint src && tsc` |
 
 Theme is also overridable inline:
@@ -149,8 +152,10 @@ CLI flags supported on the asset scripts:
 ```bash
 npm run assets:prompts -- --theme=vercel --force
 npm run assets:gen     -- --theme=apple --force
-npm run assets:gen     -- --dry-run        # write SVG placeholders, skip Imagen
-npm run assets:gen     -- --model=imagen-4.0-generate-001
+npm run assets:gen     -- --dry-run        # write SVG placeholders, skip the API
+npm run assets:gen     -- --model=imagen-3.0-generate-002      # paid-tier Imagen via :predict
+npm run assets:gen     -- --model=imagen-4.0-generate-001      # Imagen 4 (if your key has access)
+npm run assets:gen     -- --model=gemini-2.5-flash-image       # GA Gemini image-gen (default is the preview)
 ```
 
 ---
@@ -176,7 +181,10 @@ npm run dev
 Required sections: `## TL;DR`, `## What it is`, `## Why it matters`, `## How it's done`, `## Recap`. The error prints what was found vs expected. Re-generate the topic file with [prompt.md](prompt.md) Part B on claude.ai.
 
 **`npm run assets:gen` says "GEMINI_API_KEY not set in .env"**
-The pipeline still writes theme-correct SVG placeholders so the render never breaks. To upgrade to real Imagen images: drop your key into `.env` (copy from `.env.example` first) and re-run. The cache lives in `public/assets/manifest.json` — only changed prompts get re-billed.
+The pipeline still writes theme-correct SVG placeholders so the render never breaks. To upgrade to real images: drop your key into `.env` (copy from `.env.example` first) and re-run. The cache lives in `public/assets/manifest.json` — only changed prompts get re-billed.
+
+**`npm run assets:gen` → "404 Not Found — models/imagen-... is not found for API version v1beta"**
+Your key doesn't have access to the Imagen model. The default model is now `gemini-2.5-flash-image-preview`, which uses Gemini's native image generation via `:generateContent` and works on any standard Gemini API key — if you see this error you're on an older revision; pull `main`. To force a specific model, pass `--model=<id>`; the script auto-routes `gemini-*` to `:generateContent` and `imagen-*` to `:predict`.
 
 **An asset failed mid-run**
 `scripts/generate-assets.ts` retries 3× with exponential backoff (1s/3s/8s). Any asset that still fails falls back to an SVG placeholder, and the batch keeps going — the manifest flags `placeholder: true` so a later `npm run assets:gen` (or `--force`) will retry the failed ones.

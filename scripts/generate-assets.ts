@@ -17,7 +17,11 @@
  *   --force                ignore the cache; regenerate every asset.
  *   --theme=apple|vercel   only process one theme.
  *   --dry-run              skip the API entirely; write placeholders only.
- *   --model=<id>           override the Imagen model (default: imagen-3.0-generate-002).
+ *   --model=<id>           override the image-gen model. Default:
+ *                          gemini-2.5-flash-image-preview (Gemini native
+ *                          via generateContent — works on any standard
+ *                          Gemini API key). Pass an `imagen-*` model name
+ *                          to switch to the Imagen `:predict` endpoint.
  */
 
 import "dotenv/config";
@@ -40,11 +44,25 @@ const PROMPTS_DIR = join(ROOT, "assets", "prompts");
 const ASSETS_DIR = join(ROOT, "public", "assets");
 const MANIFEST_PATH = join(ASSETS_DIR, "manifest.json");
 
-// ─── Imagen REST ───────────────────────────────────────────────────────────
+// ─── Gemini image-gen REST ─────────────────────────────────────────────────
 
-const DEFAULT_MODEL = "imagen-3.0-generate-002";
+/**
+ * Default model: Gemini Nano Banana image generation. It uses the same
+ * `generateContent` endpoint as Gemini text models, so any standard
+ * GEMINI_API_KEY works without paid-tier Imagen access. Override with
+ * `--model=imagen-3.0-generate-002` if your key has Imagen access.
+ *
+ * The script auto-detects which API to call by the model name prefix:
+ *   `gemini-*` → `:generateContent` (image returned in inlineData parts)
+ *   `imagen-*` → `:predict` (image returned in predictions[0].bytesBase64Encoded)
+ */
+const DEFAULT_MODEL = "gemini-2.5-flash-image-preview";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const RETRY_DELAYS_MS = [1000, 3000, 8000]; // 3 attempts after the first
+
+type ApiKind = "gemini" | "imagen";
+const apiKindFor = (model: string): ApiKind =>
+  model.toLowerCase().startsWith("imagen") ? "imagen" : "gemini";
 
 // ─── Main ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +92,7 @@ async function main() {
       );
     }
   } else {
-    log(`Imagen target: ${args.model}`);
+    log(`image-gen target: ${args.model} (${apiKindFor(args.model)} API)`);
   }
 
   mkdirSync(ASSETS_DIR, { recursive: true });
@@ -119,7 +137,7 @@ async function main() {
     }
 
     try {
-      const png = await callImagenWithRetry(variant, apiKey, args.model);
+      const png = await callImageGenWithRetry(variant, apiKey, args.model);
       writeFileSync(absPath, png);
       manifest[key] = makeEntry(variant, relPath, false);
       generated += 1;
@@ -147,9 +165,9 @@ async function main() {
   }
 }
 
-// ─── Imagen call ───────────────────────────────────────────────────────────
+// ─── Image-gen call ────────────────────────────────────────────────────────
 
-async function callImagenWithRetry(
+async function callImageGenWithRetry(
   variant: PromptVariant,
   apiKey: string,
   model: string,
@@ -158,7 +176,7 @@ async function callImagenWithRetry(
   const attempts = 1 + RETRY_DELAYS_MS.length;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await callImagen(variant, apiKey, model);
+      return await callImageGen(variant, apiKey, model);
     } catch (err) {
       lastErr = err as Error;
       const isLast = i === attempts - 1;
@@ -173,12 +191,26 @@ async function callImagenWithRetry(
   throw lastErr ?? new Error("unknown error");
 }
 
-async function callImagen(
+function callImageGen(
   variant: PromptVariant,
   apiKey: string,
   model: string,
 ): Promise<Buffer> {
-  const url = `${API_BASE}/${model}:predict?key=${encodeURIComponent(apiKey)}`;
+  return apiKindFor(model) === "imagen"
+    ? callImagenPredict(variant, apiKey, model)
+    : callGeminiGenerateContent(variant, apiKey, model);
+}
+
+/**
+ * Imagen 3/4 via Vertex-style `:predict` endpoint. Requires API access
+ * to the chosen Imagen model (often paid-tier only).
+ */
+async function callImagenPredict(
+  variant: PromptVariant,
+  apiKey: string,
+  model: string,
+): Promise<Buffer> {
+  const url = `${API_BASE}/${model}:predict`;
   const body = {
     instances: [{ prompt: variant.prompt }],
     parameters: {
@@ -189,24 +221,87 @@ async function callImagen(
 
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-goog-api-key": apiKey,
+    },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    const msg = text ? `${res.status} ${res.statusText} — ${text.slice(0, 200)}` : `${res.status} ${res.statusText}`;
-    throw new Error(`Imagen ${msg}`);
+    throw new Error(await formatApiError("Imagen", res));
   }
 
   const json = (await res.json()) as {
     predictions?: { mimeType?: string; bytesBase64Encoded?: string }[];
   };
-  const pred = json.predictions?.[0];
-  if (!pred?.bytesBase64Encoded) {
-    throw new Error("Imagen returned no image bytes");
+  const b64 = json.predictions?.[0]?.bytesBase64Encoded;
+  if (!b64) throw new Error("Imagen returned no image bytes");
+  return Buffer.from(b64, "base64");
+}
+
+/**
+ * Gemini native image generation via `:generateContent`. The image is
+ * returned as `inlineData` inside the response parts. Aspect ratio is
+ * injected into the prompt because Gemini doesn't accept it as a
+ * parameter — Imagen's `aspectRatio` field has no equivalent.
+ */
+async function callGeminiGenerateContent(
+  variant: PromptVariant,
+  apiKey: string,
+  model: string,
+): Promise<Buffer> {
+  const url = `${API_BASE}/${model}:generateContent`;
+  const prompt =
+    `${variant.prompt} ` +
+    `Output image aspect ratio: ${variant.aspectRatio}.` +
+    (variant.transparentBackground
+      ? " Output must have a fully transparent background."
+      : "");
+
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      responseModalities: ["TEXT", "IMAGE"],
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-goog-api-key": apiKey,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new Error(await formatApiError("Gemini", res));
   }
-  return Buffer.from(pred.bytesBase64Encoded, "base64");
+
+  const json = (await res.json()) as {
+    candidates?: {
+      content?: {
+        parts?: { inlineData?: { mimeType?: string; data?: string } }[];
+      };
+    }[];
+  };
+
+  const parts = json.candidates?.[0]?.content?.parts ?? [];
+  for (const p of parts) {
+    const data = p.inlineData?.data;
+    if (data) return Buffer.from(data, "base64");
+  }
+  throw new Error("Gemini returned no inlineData image bytes");
+}
+
+async function formatApiError(label: string, res: Response): Promise<string> {
+  const text = await res.text().catch(() => "");
+  // Squash whitespace so the retry log line stays single-line readable.
+  const snippet = text.replace(/\s+/g, " ").slice(0, 240);
+  return snippet
+    ? `${label} ${res.status} ${res.statusText} — ${snippet}`
+    : `${label} ${res.status} ${res.statusText}`;
 }
 
 // ─── SVG placeholder ───────────────────────────────────────────────────────
@@ -387,13 +482,17 @@ Usage: npm run assets:gen -- [options]
 
   --force                Ignore the cache; regenerate every asset.
   --theme=apple|vercel   Only process one theme.
-  --dry-run              Skip the Imagen API; write SVG placeholders only.
-  --model=<id>           Override the Imagen model (default ${DEFAULT_MODEL}).
+  --dry-run              Skip the API; write SVG placeholders only.
+  --model=<id>           Override the image-gen model (default ${DEFAULT_MODEL}).
+                         Models starting with "gemini-" use :generateContent
+                         (works on any standard Gemini API key).
+                         Models starting with "imagen-" use :predict
+                         (requires Imagen access on your key).
   --help, -h             Print this message.
 
 GEMINI_API_KEY must be set in .env to make real API calls.
 Without the key (or with --dry-run), every asset is written as an SVG
-placeholder so the Phase 5 render never breaks. Re-run later to upgrade.
+placeholder so the render never breaks. Re-run later to upgrade.
 `;
 
 function log(msg: string): void {
