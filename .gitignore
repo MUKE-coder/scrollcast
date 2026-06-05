@@ -1,0 +1,16 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Ignore the output video from Git but not videos you import into src/.
+out
+
+# Local AI skills (re-installable via skills-lock.json + `npx skills add`)
+.agents/
+
+# Generated assets (re-created by `npm run assets:gen` from cached prompts)
+public/assets/
+
+# Generated video plan (re-created by `npm run ingest` from topic-details.md)
+src/video-plan.json

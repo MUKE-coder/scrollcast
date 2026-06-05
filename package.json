@@ -1,0 +1,38 @@
+{
+  "name": "scrollcast",
+  "version": "0.1.0",
+  "description": "Clone-and-run animated technical explainer video engine (Remotion + Gemini Imagen)",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render MainVideo out/scrollcast.mp4",
+    "ingest": "tsx scripts/ingest.ts",
+    "assets:prompts": "tsx scripts/make-asset-prompts.ts",
+    "assets:gen": "tsx scripts/generate-assets.ts",
+    "lint": "eslint src && tsc",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.472",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.472",
+    "prism-react-renderer": "^2.4.1"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.472",
+    "@types/node": "^22.10.0",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "dotenv": "^16.4.7",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "5.9.3"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}
