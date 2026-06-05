@@ -9,7 +9,10 @@ out
 # Local AI skills (re-installable via skills-lock.json + `npx skills add`)
 .agents/
 
-# Generated assets (re-created by `npm run assets:gen` from cached prompts)
+# Generated Imagen prompts (re-created by `npm run assets:prompts` from src/video-plan.json)
+assets/prompts/
+
+# Generated assets — images + manifest.json (re-created by `npm run assets:gen` from cached prompts)
 public/assets/
 
 # Generated video plan (re-created by `npm run ingest` from topic-details.md)

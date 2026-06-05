@@ -78,12 +78,12 @@ Tasks:
 **Goal:** Every scene's icons/backgrounds/graphics generated and cached, per theme.
 
 Tasks:
-- [ ] `scripts/make-asset-prompts.ts`: for each `assetRef`, emit a structured Imagen prompt to `/assets/prompts/{id}.json` with **two variants** (apple = light/clean/realistic; vercel = dark/Geist/realistic). Encode style guidance from `design-style-guide.md` into every prompt so output is consistent and realistic, not cartoonish.
-- [ ] `scripts/generate-assets.ts`: read prompts, call the **Gemini Imagen API**, write images to `/public/assets/{theme}/{id}.png`.
-- [ ] Implement a content-hash cache: skip regeneration if prompt unchanged (avoid re-billing). Store a `manifest.json` mapping id→hash→path.
-- [ ] Handle API errors/rate limits with retry + clear logging. Never hard-fail the whole batch on one image.
-- [ ] Provide a `--force` flag to regenerate, and a `--theme` filter.
-- [ ] Add a fallback: if an asset fails, generate a code/SVG placeholder so the render never breaks.
+- [x] `scripts/make-asset-prompts.ts`: for each `assetRef`, emit a structured Imagen prompt to `/assets/prompts/{id}.json` with **two variants** (apple = light/clean/realistic; vercel = dark/Geist/realistic). Encode style guidance from `design-style-guide.md` into every prompt so output is consistent and realistic, not cartoonish.
+- [x] `scripts/generate-assets.ts`: read prompts, call the **Gemini Imagen API**, write images to `/public/assets/{theme}/{id}.png`.
+- [x] Implement a content-hash cache: skip regeneration if prompt unchanged (avoid re-billing). Store a `manifest.json` mapping id→hash→path.
+- [x] Handle API errors/rate limits with retry + clear logging. Never hard-fail the whole batch on one image.
+- [x] Provide a `--force` flag to regenerate, and a `--theme` filter.
+- [x] Add a fallback: if an asset fails, generate a code/SVG placeholder so the render never breaks.
 
 **Exit criteria:** `npm run assets:prompts && npm run assets:gen` produces cached, theme-correct realistic images for the sample topic; a second run regenerates nothing.
 
