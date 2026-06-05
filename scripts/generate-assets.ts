@@ -25,7 +25,14 @@
  */
 
 import "dotenv/config";
-import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import {
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+  unlinkSync,
+} from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -118,11 +125,25 @@ async function main() {
     const absPath = join(ASSETS_DIR, relPath);
     const placeholderPath = join(ASSETS_DIR, `${variant.theme}/${variant.id}.svg`);
 
+    // Cache logic:
+    //   - --force                    → never a hit
+    //   - hash changed               → never a hit (prompt was edited)
+    //   - real PNG exists            → always a hit (cheapest win)
+    //   - only an SVG placeholder exists:
+    //       in placeholder mode      → hit (don't re-call the API just to
+    //                                  rewrite the same SVG)
+    //       in real-API mode         → MISS, so we upgrade the placeholder
+    //                                  to a real image now that the API
+    //                                  works. This is the path that fixes
+    //                                  a stale-placeholder repo after a
+    //                                  user adds their key.
+    const hashMatch = existing && existing.promptHash === variant.promptHash;
+    const realFileExists = existsSync(absPath);
+    const placeholderExists = existsSync(placeholderPath);
     const cacheHit =
       !args.force &&
-      existing &&
-      existing.promptHash === variant.promptHash &&
-      (existsSync(absPath) || existsSync(placeholderPath));
+      hashMatch &&
+      (realFileExists || (usePlaceholder && placeholderExists));
 
     if (cacheHit) {
       cached += 1;
@@ -139,6 +160,11 @@ async function main() {
     try {
       const png = await callImageGenWithRetry(variant, apiKey, args.model);
       writeFileSync(absPath, png);
+      // Drop the stale SVG placeholder so the directory doesn't carry
+      // both `<id>.svg` and `<id>.png` for the same asset.
+      if (existsSync(placeholderPath)) {
+        try { unlinkSync(placeholderPath); } catch { /* ignore */ }
+      }
       manifest[key] = makeEntry(variant, relPath, false);
       generated += 1;
       log(`gen   ${key.padEnd(40)} → ${relPath}`);
