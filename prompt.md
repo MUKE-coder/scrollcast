@@ -49,14 +49,16 @@ Begin with Phase 0 now. Confirm you've read all three project files and installe
 
 ## PART B — Research prompt for claude.ai (web) → produces `topic-details.md`
 
-> Use this on the web each time you pick a new topic. Replace `{{TOPIC}}`. Save the output as `topic-details.md` and drop it into the repo root. Keep it information-rich — it's the script source, so accuracy and structure matter more than prose flair.
+> Use this on the web each time you pick a new topic. Replace `{{TOPIC}}` with your topic name. The prompt tells Claude to emit the entire research as ONE file named `topic-details.md`; save that file at the repo root (overwriting any prior topic), then run `npm run ingest`. Keep it information-rich — it's the script source, so accuracy and structure matter more than prose flair.
 
 ```
 You are my research assistant preparing source material for an 8–15 minute animated technical explainer video (ByteByteGo style). The video engine will parse your output, so structure and clarity matter as much as accuracy.
 
 TOPIC: {{TOPIC}}
 
-Produce a single Markdown document I can save as topic-details.md. Be technically accurate, concrete, and self-contained (assume the reader/animator is smart but not an expert in this topic). Prefer specifics, real examples, numbered steps, and clear cause-and-effect over vague description. No fluff, no marketing tone. Do not include images.
+OUTPUT FILE: write the entire research as ONE Markdown file named exactly `topic-details.md`. Do not split it across multiple files. Do not include any text outside the Markdown document — no preamble, no closing remarks, no "here is your research" wrapper. The first line of the file must be the H1 heading `# {{TOPIC}}`. Save (or render in a code/file block clearly labeled `topic-details.md`) so I can copy the whole document into a single file at my repo root.
+
+Be technically accurate, concrete, and self-contained (assume the reader/animator is smart but not an expert in this topic). Prefer specifics, real examples, numbered steps, and clear cause-and-effect over vague description. No fluff, no marketing tone. Do not include images.
 
 Use EXACTLY this structure and headings:
 
@@ -98,6 +100,7 @@ CONSTRAINTS:
 - Keep total length focused enough to fit an 8–15 minute video — depth over breadth; if the topic is huge, cover the most important 5–8 ideas well rather than everything shallowly.
 - Every code snippet must be plausible and correct for the topic.
 - Use no emojis.
+- The final filename is non-negotiable: `topic-details.md`. The ScrollCast ingest script (`npm run ingest`) reads from that exact path at the repo root.
 ```
 
 ---
