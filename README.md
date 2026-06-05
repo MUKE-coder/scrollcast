@@ -84,7 +84,7 @@ npm run assets:gen
 
 For each prompt file: the script checks the cache (sha256 vs `public/assets/manifest.json`), calls the Gemini image-generation REST endpoint, decodes the returned PNG, and writes it to `public/assets/{theme}/<id>.png`. On API errors it retries 3× with exponential backoff (1s/3s/8s); persistent failures fall back to an SVG placeholder so the render never crashes. Re-running is free: cached entries are skipped.
 
-The default model is `gemini-2.5-flash-image-preview`, called via `:generateContent` — this works on any standard Gemini API key. The script auto-detects the API path from the model name: `gemini-*` → `:generateContent`, `imagen-*` → `:predict` (Imagen requires a paid-tier key with Imagen enabled).
+The default model is `gemini-3.1-flash-image` (latest GA flash image-gen, fast for batch generation) called via `:generateContent`. The script auto-detects the API path from the model name: `gemini-*` → `:generateContent`, `imagen-*` → `:predict`. Run `npm run assets:gen -- --list-models` to see every model your key can actually call.
 
 Useful flags:
 ```bash
@@ -133,7 +133,7 @@ ScrollCast does **not** generate audio. Two slots exist:
 | `npm run render:both` | Both theme renders, sequentially |
 | `npm run ingest` | `topic-details.md` → `src/video-plan.json` |
 | `npm run assets:prompts` | `video-plan.json` → `assets/prompts/*.json` (32 files for the sample) |
-| `npm run assets:gen` | prompts → Gemini image-gen (default `gemini-2.5-flash-image-preview`) → `public/assets/{theme}/*` (cached; falls back to SVG placeholders without `GEMINI_API_KEY`) |
+| `npm run assets:gen` | prompts → Gemini image-gen (default `gemini-3.1-flash-image`) → `public/assets/{theme}/*` (cached; falls back to SVG placeholders without `GEMINI_API_KEY`) |
 | `npm run lint` | `eslint src && tsc` |
 
 Theme is also overridable inline:
@@ -152,10 +152,11 @@ CLI flags supported on the asset scripts:
 ```bash
 npm run assets:prompts -- --theme=vercel --force
 npm run assets:gen     -- --theme=apple --force
-npm run assets:gen     -- --dry-run        # write SVG placeholders, skip the API
-npm run assets:gen     -- --model=imagen-3.0-generate-002      # paid-tier Imagen via :predict
-npm run assets:gen     -- --model=imagen-4.0-generate-001      # Imagen 4 (if your key has access)
-npm run assets:gen     -- --model=gemini-2.5-flash-image       # GA Gemini image-gen (default is the preview)
+npm run assets:gen     -- --dry-run                              # write SVG placeholders, skip the API
+npm run assets:gen     -- --list-models                          # print every model your key can call
+npm run assets:gen     -- --model=gemini-3-pro-image             # GA Pro image (higher quality, slower)
+npm run assets:gen     -- --model=imagen-4.0-fast-generate-001   # Imagen 4 fast via :predict
+npm run assets:gen     -- --model=imagen-4.0-ultra-generate-001  # Imagen 4 ultra (highest quality)
 ```
 
 ---

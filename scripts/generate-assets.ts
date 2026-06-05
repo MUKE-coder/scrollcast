@@ -54,17 +54,25 @@ const MANIFEST_PATH = join(ASSETS_DIR, "manifest.json");
 // ─── Gemini image-gen REST ─────────────────────────────────────────────────
 
 /**
- * Default image-gen model. Gemini image-gen model names and availability
- * shift fairly often; if the default 404s on your key, run
- *   `npm run assets:gen -- --list-models`
- * to print every model your key can call (with the methods each supports),
- * then pass `--model=<id>` to pick one.
+ * Default image-gen model. Picked for the typical ScrollCast workload of
+ * 24–32 small assets per video — fast generation matters and quality only
+ * has to clear "brand-consistent illustration" not "photorealistic hero
+ * shot." The latest GA flash image-gen model is the sweet spot.
+ *
+ * Alternatives for a different speed/quality/cost tradeoff:
+ *   --model=gemini-3-pro-image          GA Pro image (higher quality, ~3× slower)
+ *   --model=imagen-4.0-fast-generate-001 GA Imagen 4 fast via :predict
+ *   --model=imagen-4.0-ultra-generate-001 GA Imagen 4 ultra (slowest, highest)
+ *
+ * If the default 404s on your key (model availability shifts by region
+ * and tier), run `npm run assets:gen -- --list-models` to see what your
+ * key can actually call, then pass `--model=<id>`.
  *
  * The script auto-detects which API to call by the model name prefix:
  *   `gemini-*` → `:generateContent` (image returned in inlineData parts)
  *   `imagen-*` → `:predict` (image returned in predictions[0].bytesBase64Encoded)
  */
-const DEFAULT_MODEL = "gemini-2.0-flash-preview-image-generation";
+const DEFAULT_MODEL = "gemini-3.1-flash-image";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const RETRY_DELAYS_MS = [1000, 3000, 8000]; // 3 attempts after the first
 
