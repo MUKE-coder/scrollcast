@@ -1,10 +1,17 @@
 import "./theme/loadFonts";
 
 import React from "react";
-import { Composition } from "remotion";
-import { MainVideo } from "./MainVideo";
+import { Composition, type CalculateMetadataFunction } from "remotion";
+import { MainVideo, VIDEO_PLAN, type MainVideoProps } from "./MainVideo";
 import { ThemeGallery } from "./dev/ThemeGallery";
 import { ComponentGallery } from "./dev/ComponentGallery";
+
+const calculateMainMetadata: CalculateMetadataFunction<MainVideoProps> = async ({
+  props,
+}) => ({
+  durationInFrames: VIDEO_PLAN.meta.totalDurationFrames,
+  props,
+});
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -12,11 +19,12 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MainVideo"
         component={MainVideo}
-        durationInFrames={300}
+        durationInFrames={VIDEO_PLAN.meta.totalDurationFrames}
         fps={30}
         width={1920}
         height={1080}
         defaultProps={{ theme: "vercel" as const }}
+        calculateMetadata={calculateMainMetadata}
       />
       <Composition
         id="ThemeGallery-Apple"

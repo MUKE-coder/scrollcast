@@ -15,5 +15,6 @@ assets/prompts/
 # Generated assets — images + manifest.json (re-created by `npm run assets:gen` from cached prompts)
 public/assets/
 
-# Generated video plan (re-created by `npm run ingest` from topic-details.md)
-src/video-plan.json
+# Generated video plan is committed so a fresh clone can `npm run dev` without
+# first running `npm run ingest`. Re-running ingest will overwrite it.
+# (kept un-ignored on purpose — was previously listed here)

@@ -94,14 +94,14 @@ Tasks:
 **Goal:** Real scene components that consume `video-plan.json` + assets.
 
 Tasks:
-- [ ] `IntroScene`: animated title card with kicker, topic title, theme background.
-- [ ] `ConceptScene`: heading + animated bullets + supporting icon/graphic reveal.
-- [ ] `DiagramScene`: nodes (Cards/Icons) + `AnimatedArrow`s drawing on in narration order (the ByteByteGo "reveal piece by piece" pattern).
-- [ ] `ComparisonScene`: side-by-side / before-after layout.
-- [ ] `CodeEditorScene`: realistic typing effect — reveal code char-by-char (or token-by-token) driven by `useCurrentFrame()`; blinking cursor; collapsed editor that expands; syntax highlight via `prism-react-renderer`; filename tab + window chrome.
-- [ ] `OutroScene`: recap + end card.
-- [ ] `MainVideo.tsx`: read `video-plan.json`, place each scene on the timeline via `<Series>`/`<Sequence>` with correct `durationInFrames`, applying scene transitions.
-- [ ] Register `MainVideo` in `Root.tsx` with the `theme` prop and `calculateMetadata` to set total duration from the plan.
+- [x] `IntroScene`: animated title card with kicker, topic title, theme background.
+- [x] `ConceptScene`: heading + animated bullets + supporting icon/graphic reveal.
+- [x] `DiagramScene`: nodes (Cards/Icons) + `AnimatedArrow`s drawing on in narration order (the ByteByteGo "reveal piece by piece" pattern).
+- [x] `ComparisonScene`: side-by-side / before-after layout.
+- [x] `CodeEditorScene`: realistic typing effect — reveal code char-by-char (or token-by-token) driven by `useCurrentFrame()`; blinking cursor; collapsed editor that expands; syntax highlight via `prism-react-renderer`; filename tab + window chrome.
+- [x] `OutroScene`: recap + end card.
+- [x] `MainVideo.tsx`: read `video-plan.json`, place each scene on the timeline via `<Series>`/`<Sequence>` with correct `durationInFrames`, applying scene transitions.
+- [x] Register `MainVideo` in `Root.tsx` with the `theme` prop and `calculateMetadata` to set total duration from the plan.
 
 **Exit criteria:** `npm run dev` plays a continuous 8–15 min video assembled from the plan, including at least one fully-working code-typing editor scene, correct in both themes.
 
