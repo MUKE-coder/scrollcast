@@ -10,7 +10,9 @@ Two themes only:
 
 ---
 
-## Per-video workflow
+## How to use this repo
+
+The flow below produces one finished video. After step 2 (first-time setup), repeat steps 3–9 for every new topic.
 
 ```
 [claude.ai web]                            [this repo]
@@ -19,28 +21,101 @@ Two themes only:
                                             video-plan.json    public/assets/{theme}/   out/*.mp4
 ```
 
-1. **Research** — on claude.ai web, use the research prompt in [prompt.md](prompt.md) (Part B) for your topic. Save the output as `topic-details.md` and drop it into the repo root.
-2. **Ingest** — `npm run ingest` → parses `topic-details.md` into `src/video-plan.json` (scene list, durations, narration, asset refs).
-3. **Asset prompts** — `npm run assets:prompts` → writes Gemini Imagen prompts to `assets/prompts/*.json`, one variant per theme.
-4. **Asset generation** — `npm run assets:gen` → calls Gemini Imagen, writes images to `public/assets/{theme}/`. Content-hash cached so re-runs don't re-bill.
-5. **Preview** — `npm run dev` → opens Remotion Studio.
-6. **Render** — `npm run render -- --props='{"theme":"vercel"}'` → MP4 in `/out`. Theme is switchable per render with no layout breakage.
-
-> Audio: **no AI voiceover.** A background-music slot exists; you record/add your own VO in post.
-
----
-
-## Setup (clone-and-run)
+### Step 1 — Clone and install (once per machine)
 
 ```bash
-git clone <this repo>
+git clone https://github.com/MUKE-coder/scrollcast.git
 cd scrollcast
 npm install
-cp .env.example .env   # then add your GEMINI_API_KEY (needed from Phase 4 onward)
-npm run dev            # opens Remotion Studio at 1920x1080 / 30fps
 ```
 
-The `GEMINI_API_KEY` is loaded by `scripts/*` via `dotenv` and is **never** bundled into the render output.
+`npm install` pulls Remotion, the theme/font packages (`@remotion/google-fonts`, `@remotion/transitions`), the icon set (`lucide-react`), the syntax highlighter (`prism-react-renderer`), and the build-time dev tools. Takes ~1 minute on a clean machine.
+
+### Step 2 — Add your Gemini API key (optional, needed only for real images)
+
+```bash
+cp .env.example .env
+# edit .env and paste your key after GEMINI_API_KEY=
+```
+
+`GEMINI_API_KEY` is read by `scripts/generate-assets.ts` via `dotenv`. It is **never** bundled into the render output.
+
+**No key?** Skip this step. The asset pipeline detects a missing key and writes theme-correct **SVG placeholders** so the rest of the workflow still works. You can drop a key in later and run `npm run assets:gen --force` to upgrade those placeholders to real Imagen images.
+
+### Step 3 — Research the topic on claude.ai (web)
+
+ScrollCast does *not* generate the research itself — your script is the source of truth. On [claude.ai](https://claude.ai), paste **Part B** of [prompt.md](prompt.md), replacing `{{TOPIC}}` with your topic name (e.g. `Kubernetes Networking`, `OAuth 2.0`, `CRDTs`). Claude returns a structured Markdown document.
+
+Required sections in the output: `## TL;DR`, `## What it is`, `## Why it matters`, `## How it's done` (with `### Step N — Name` subsections), `## Recap`. Optional: `## Key comparisons`, `## Suggested visuals`. If any required section is missing, `npm run ingest` will refuse the file with a clear error.
+
+### Step 4 — Drop the research file in the repo root
+
+Save Claude's output as `topic-details.md` at the repo root, overwriting whatever's there.
+
+```bash
+# example: replace the bundled Penetration Testing topic with your own
+mv ~/Downloads/topic-details.md ./topic-details.md
+```
+
+> Want to try the workflow without writing a topic yet? Use the bundled sample:
+> `cp examples/penetration-testing/topic-details.md ./topic-details.md`
+
+### Step 5 — Build the video plan
+
+```bash
+npm run ingest
+```
+
+The ingest script parses your `topic-details.md` into a structured timeline at `src/video-plan.json` — one scene per logical section, durations distributed to hit 8–15 minutes, scene type chosen per "How" step by content (`code` if a fenced code block is present, `diagram` if a `Visual idea:` line is present, `concept` otherwise). The script prints the scene-by-scene breakdown so you can sanity-check pacing before the next step.
+
+### Step 6 — Generate the per-asset Imagen prompts
+
+```bash
+npm run assets:prompts
+```
+
+For every `assetRef` in `video-plan.json`, this writes two prompt files (one per theme) to `assets/prompts/<id>.<theme>.json`. Each prompt composes your description + per-kind guidance + the verbatim theme style suffix from [`design-style-guide.md`](design-style-guide.md) §6, plus an aspect ratio (icons 1:1, everything else 16:9) and an sha256 hash that drives the cache.
+
+### Step 7 — Generate the images
+
+```bash
+npm run assets:gen
+```
+
+For each prompt file: the script checks the cache (sha256 vs `public/assets/manifest.json`), calls the Gemini Imagen REST endpoint, decodes the base64 PNG, and writes it to `public/assets/{theme}/<id>.png`. On API errors it retries 3× with exponential backoff (1s/3s/8s); persistent failures fall back to an SVG placeholder so the render never crashes. Re-running is free: cached entries are skipped.
+
+Useful flags:
+```bash
+npm run assets:gen -- --force                       # ignore cache, regenerate everything
+npm run assets:gen -- --theme=apple                 # only one theme
+npm run assets:gen -- --dry-run                     # placeholder mode, no API calls
+npm run assets:gen -- --model=imagen-4.0-generate-001  # override the model
+```
+
+### Step 8 — Preview in Remotion Studio
+
+```bash
+npm run dev
+```
+
+Opens Remotion Studio at `http://localhost:3000`. You'll see the timeline (`MainVideo` composition) plus the development gallery compositions (`ThemeGallery-Apple`, `ThemeGallery-Vercel`, `ComponentGallery-Apple`, `ComponentGallery-Vercel`) for design-system QA. Scrub the timeline to watch your video. Switch the `theme` prop in the right-hand props panel to compare Apple vs Vercel without re-rendering.
+
+### Step 9 — Render the final MP4
+
+```bash
+npm run render:vercel        # → out/scrollcast-vercel.mp4
+npm run render:apple         # → out/scrollcast-apple.mp4
+npm run render:both          # both, sequentially
+```
+
+Each `render:*` script reads the corresponding props file in `examples/props/` and writes a 1920×1080 / 30 fps H.264 MP4. An 8-minute video typically takes 5–15 minutes to render depending on your machine.
+
+### Step 10 (optional) — Add background music and your voiceover
+
+ScrollCast does **not** generate audio. Two slots exist:
+
+- **Background music** — drop a track in `public/audio/` and set `BACKGROUND_MUSIC_TRACK` in [`src/MainVideo.tsx`](src/MainVideo.tsx) to the file name. The volume is ducked to `MUSIC_VOLUME` (0.12) and fades in/out around the intro and outro. See [`public/audio/README.md`](public/audio/README.md).
+- **Voiceover** — every scene's `narration` string in `src/video-plan.json` is the spoken script. Record your VO against it, then layer it on top of the rendered MP4 in any video editor (DaVinci Resolve, Premiere, FFmpeg). Advanced users can also add a second `<Audio>` element inside `MainVideo.tsx`.
 
 ---
 
