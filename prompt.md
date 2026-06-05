@@ -100,10 +100,27 @@ CONSTRAINTS:
 - Keep total length focused enough to fit an 8–15 minute video — depth over breadth; if the topic is huge, cover the most important 5–8 ideas well rather than everything shallowly.
 - Every code snippet must be plausible and correct for the topic.
 - Use no emojis.
-- The final filename is non-negotiable: `topic-details.md`. The ScrollCast ingest script (`npm run ingest`) reads from that exact path at the repo root.
+- The final filename is non-negotiable: `topic-details.md`. ScrollCast reads from that exact path at the repo root.
 ```
 
 ---
 
+### What to do with the result
+
+Save the web Claude's output as `topic-details.md` at the ScrollCast repo root (overwriting any prior file). Then, in your terminal:
+
+```bash
+cd scrollcast
+claude               # launch Claude Code
+```
+
+…and inside Claude Code, run:
+
+```
+/make-video
+```
+
+Claude Code is the engine — it reads `topic-details.md`, refines the auto-generated plan into something a real producer would ship, picks scene-specific icons, hand-tunes assets where the library default doesn't fit, renders preview stills, fixes anything that breaks legibility, then renders the final MP4. See [`.claude/commands/make-video.md`](.claude/commands/make-video.md) for the full workflow.
+
 ### Tip
-Keep one `topic-details.md` per video. When you start a new topic, archive the old one (e.g. into `examples/<topic>/`) so you always have a working reference, then drop the new file in root and re-run the pipeline from `npm run ingest`.
+Keep one `topic-details.md` per video. When you start a new topic, archive the old one (e.g. into `examples/<topic>/`) so you always have a working reference, then drop the new file in root and re-run `/make-video`.

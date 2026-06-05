@@ -12,13 +12,13 @@ Two themes only:
 
 ## How to use this repo
 
-The flow below produces one finished video. After step 2 (first-time setup), repeat steps 3–9 for every new topic.
+**ScrollCast is driven by Claude Code at runtime.** The npm scripts are tools Claude Code uses; they're not the engine. You drop a research file, you invoke Claude Code in the repo, you ask for a video, Claude Code reads the topic and produces the best video the engine can make — refining the plan, picking icons per scene, hand-tuning assets, rendering an MP4.
 
 ```
-[claude.ai web]                            [this repo]
-  research prompt        topic-details.md     ingest        assets         dev / render
- ─────────────────►   ────────────────►   ───────────►   ───────►   ──────────────────►
-                                            video-plan.json    public/assets/{theme}/   out/*.mp4
+[claude.ai web]                [your terminal]
+  research prompt          drop topic-details.md       claude code makes the video
+ ─────────────────►   ─────────────────────────►   ────────────────────────────────►
+                                                      out/scrollcast-{theme}.mp4
 ```
 
 ### Step 1 — Clone and install (once per machine)
@@ -29,96 +29,54 @@ cd scrollcast
 npm install
 ```
 
-`npm install` pulls Remotion, the theme/font packages (`@remotion/google-fonts`, `@remotion/transitions`), the icon set (`lucide-react`), the syntax highlighter (`prism-react-renderer`), and the build-time dev tools. Takes ~1 minute on a clean machine.
+You'll also want [Claude Code](https://claude.com/claude-code) installed — it's the engine.
 
-### Step 2 — Add your Gemini API key (optional, needed only for real images)
+### Step 2 — (Optional) Add a Gemini API key for real images
 
 ```bash
 cp .env.example .env
 # edit .env and paste your key after GEMINI_API_KEY=
 ```
 
-`GEMINI_API_KEY` is read by `scripts/generate-assets.ts` via `dotenv`. It is **never** bundled into the render output.
+Without a key, the asset pipeline falls back to a curated library of theme-aware isometric 3D SVGs ([`scripts/svg-library.ts`](scripts/svg-library.ts)). They're designed to ship — you do not have to upgrade to real Imagen images. With a key, Claude Code calls the Gemini image-gen API (default model: `gemini-3.1-flash-image`).
 
-**No key?** Skip this step. The asset pipeline detects a missing key and writes theme-correct **SVG placeholders** so the rest of the workflow still works. You can drop a key in later and run `npm run assets:gen --force` to upgrade those placeholders to real Imagen images.
+### Step 3 — Research your topic on claude.ai (web)
 
-### Step 3 — Research the topic on claude.ai (web)
+On [claude.ai](https://claude.ai), paste **Part B** of [prompt.md](prompt.md), replacing `{{TOPIC}}` with your topic (e.g. `Kubernetes Networking`, `OAuth 2.0`, `Redis Streams`). The prompt tells the web Claude to emit exactly one Markdown file called `topic-details.md` — no preamble, no wrapper. Save the output as `topic-details.md` at the repo root.
 
-ScrollCast does *not* generate the research itself — your script is the source of truth. On [claude.ai](https://claude.ai), paste **Part B** of [prompt.md](prompt.md), replacing `{{TOPIC}}` with your topic name (e.g. `Kubernetes Networking`, `OAuth 2.0`, `CRDTs`). Claude returns a structured Markdown document.
+> Don't want to write a topic yet? Use the bundled Penetration Testing sample at [`examples/penetration-testing/topic-details.md`](examples/penetration-testing/topic-details.md).
 
-Required sections in the output: `## TL;DR`, `## What it is`, `## Why it matters`, `## How it's done` (with `### Step N — Name` subsections), `## Recap`. Optional: `## Key comparisons`, `## Suggested visuals`. If any required section is missing, `npm run ingest` will refuse the file with a clear error.
-
-### Step 4 — Drop the research file in the repo root
-
-Save Claude's output as `topic-details.md` at the repo root, overwriting whatever's there.
+### Step 4 — Open Claude Code in the repo and run `/make-video`
 
 ```bash
-# example: replace the bundled Penetration Testing topic with your own
-mv ~/Downloads/topic-details.md ./topic-details.md
+cd scrollcast        # or wherever you cloned it
+claude               # launches Claude Code in this repo
 ```
 
-> Want to try the workflow without writing a topic yet? Use the bundled sample:
-> `cp examples/penetration-testing/topic-details.md ./topic-details.md`
+Then inside Claude Code:
 
-### Step 5 — Build the video plan
-
-```bash
-npm run ingest
+```
+/make-video
 ```
 
-The ingest script parses your `topic-details.md` into a structured timeline at `src/video-plan.json` — one scene per logical section, durations distributed to hit 8–15 minutes, scene type chosen per "How" step by content (`code` if a fenced code block is present, `diagram` if a `Visual idea:` line is present, `concept` otherwise). The script prints the scene-by-scene breakdown so you can sanity-check pacing before the next step.
+That's it. Claude Code:
 
-### Step 6 — Generate the per-asset Imagen prompts
+1. Reads `topic-details.md`, [`project-description.md`](project-description.md), and [`design-style-guide.md`](design-style-guide.md) so it understands the spec.
+2. Runs `npm run ingest` to get a baseline `src/video-plan.json`, then **refines it** — rewriting bullets that read like paragraph dumps, retitling scenes, picking specific lucide icons per scene, tuning durations, swapping scene types when the content fits better.
+3. Generates assets via `npm run assets:prompts` + `npm run assets:gen`. If you have a Gemini key, real images; otherwise the SVG library, possibly hand-tuned per scene.
+4. Renders preview stills at scene-representative frames and looks at them, fixes anything that breaks legibility.
+5. When you're happy, runs `npm run render:vercel` (and/or `:apple`) to produce the final MP4.
 
-```bash
-npm run assets:prompts
-```
+The detailed workflow lives in [`.claude/commands/make-video.md`](.claude/commands/make-video.md) — Claude Code reads it as part of the slash command.
 
-For every `assetRef` in `video-plan.json`, this writes two prompt files (one per theme) to `assets/prompts/<id>.<theme>.json`. Each prompt composes your description + per-kind guidance + the verbatim theme style suffix from [`design-style-guide.md`](design-style-guide.md) §6, plus an aspect ratio (icons 1:1, everything else 16:9) and an sha256 hash that drives the cache.
+> **No Claude Code?** You can run the deterministic pipeline by hand: `npm run ingest && npm run assets:prompts && npm run assets:gen && npm run render:vercel`. It produces a *working* video. The Claude-Code-driven path produces a *good* one.
 
-### Step 7 — Generate the images
-
-```bash
-npm run assets:gen
-```
-
-For each prompt file: the script checks the cache (sha256 vs `public/assets/manifest.json`), calls the Gemini image-generation REST endpoint, decodes the returned PNG, and writes it to `public/assets/{theme}/<id>.png`. On API errors it retries 3× with exponential backoff (1s/3s/8s); persistent failures fall back to an SVG placeholder so the render never crashes. Re-running is free: cached entries are skipped.
-
-The default model is `gemini-3.1-flash-image` (latest GA flash image-gen, fast for batch generation) called via `:generateContent`. The script auto-detects the API path from the model name: `gemini-*` → `:generateContent`, `imagen-*` → `:predict`. Run `npm run assets:gen -- --list-models` to see every model your key can actually call.
-
-Useful flags:
-```bash
-npm run assets:gen -- --force                              # ignore cache, regenerate everything
-npm run assets:gen -- --theme=apple                        # only one theme
-npm run assets:gen -- --dry-run                            # placeholder mode, no API calls
-npm run assets:gen -- --model=imagen-3.0-generate-002      # switch to Imagen 3 (paid Imagen access required)
-npm run assets:gen -- --model=gemini-2.5-flash-image       # GA Gemini image-gen
-```
-
-### Step 8 — Preview in Remotion Studio
-
-```bash
-npm run dev
-```
-
-Opens Remotion Studio at `http://localhost:3000`. You'll see the timeline (`MainVideo` composition) plus the development gallery compositions (`ThemeGallery-Apple`, `ThemeGallery-Vercel`, `ComponentGallery-Apple`, `ComponentGallery-Vercel`) for design-system QA. Scrub the timeline to watch your video. Switch the `theme` prop in the right-hand props panel to compare Apple vs Vercel without re-rendering.
-
-### Step 9 — Render the final MP4
-
-```bash
-npm run render:vercel        # → out/scrollcast-vercel.mp4
-npm run render:apple         # → out/scrollcast-apple.mp4
-npm run render:both          # both, sequentially
-```
-
-Each `render:*` script reads the corresponding props file in `examples/props/` and writes a 1920×1080 / 30 fps H.264 MP4. An 8-minute video typically takes 5–15 minutes to render depending on your machine.
-
-### Step 10 (optional) — Add background music and your voiceover
+### Step 5 (optional) — Add background music and your voiceover
 
 ScrollCast does **not** generate audio. Two slots exist:
 
-- **Background music** — drop a track in `public/audio/` and set `BACKGROUND_MUSIC_TRACK` in [`src/MainVideo.tsx`](src/MainVideo.tsx) to the file name. The volume is ducked to `MUSIC_VOLUME` (0.12) and fades in/out around the intro and outro. See [`public/audio/README.md`](public/audio/README.md).
-- **Voiceover** — every scene's `narration` string in `src/video-plan.json` is the spoken script. Record your VO against it, then layer it on top of the rendered MP4 in any video editor (DaVinci Resolve, Premiere, FFmpeg). Advanced users can also add a second `<Audio>` element inside `MainVideo.tsx`.
+- **Background music** — drop a track in `public/audio/` and set `BACKGROUND_MUSIC_TRACK` in [`src/MainVideo.tsx`](src/MainVideo.tsx) to the file name. Volume ducked to `MUSIC_VOLUME = 0.12` with fades in/out. See [`public/audio/README.md`](public/audio/README.md).
+- **Voiceover** — every scene's `narration` in `src/video-plan.json` is the spoken script. Record your VO against it and layer it on top of the MP4 in any editor (DaVinci, Premiere, FFmpeg).
 
 ---
 
