@@ -352,94 +352,23 @@ async function formatApiError(label: string, res: Response): Promise<string> {
 }
 
 // ─── SVG placeholder ───────────────────────────────────────────────────────
+//
+// When no GEMINI_API_KEY is set (or a real-API call fails), the script writes
+// a theme-aware "cool 3D" SVG instead of bouncing an error to the user. The
+// SVG library in `./svg-library.ts` picks an isometric icon (cube / cylinder
+// / lock / shield / cloud / key / code / terminal / network / chart / gear /
+// alert / doc), background pattern (grid / aurora / mesh), diagram template,
+// or illustration based on keyword matching against the asset description.
+// These are good enough to ship in the final video — they're flagged
+// `placeholder: true` in the manifest so a later run with an API key will
+// upgrade them, but you do NOT have to upgrade them. Many users will run
+// without an API key forever and the result still looks like a designed
+// product, not a debug stub.
 
-const THEME_COLORS = {
-  apple: {
-    bg: "#FBFBFD",
-    fg: "#1D1D1F",
-    accent: "#0071E3",
-    border: "#E5E5EA",
-    sub: "#86868B",
-  },
-  vercel: {
-    bg: "#000000",
-    fg: "#EDEDED",
-    accent: "#FFFFFF",
-    border: "#262626",
-    sub: "#666666",
-  },
-} as const;
+import { renderSvg } from "./svg-library";
 
 function writePlaceholder(variant: PromptVariant, absPath: string): void {
-  const [aw, ah] = variant.aspectRatio.split(":").map(Number);
-  const w = 1024;
-  const h = Math.round((w * ah) / aw);
-  const c = THEME_COLORS[variant.theme];
-  const kindGlyph = kindGlyphPath(variant.kind, w / 2, h / 2);
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <rect width="${w}" height="${h}" fill="${c.bg}" />
-  <rect x="${w * 0.02}" y="${h * 0.02}" width="${w * 0.96}" height="${h * 0.96}" rx="24" ry="24"
-        fill="none" stroke="${c.border}" stroke-width="2" stroke-dasharray="8 8" />
-  ${kindGlyph(c.accent)}
-  <text x="${w / 2}" y="${h - 96}" font-family="ui-monospace, 'Geist Mono', 'SF Mono', monospace"
-        font-size="36" font-weight="500" fill="${c.fg}" text-anchor="middle">${escapeXml(variant.id)}</text>
-  <text x="${w / 2}" y="${h - 56}" font-family="ui-monospace, 'Geist Mono', 'SF Mono', monospace"
-        font-size="22" fill="${c.sub}" text-anchor="middle">${variant.kind} · ${variant.theme} · placeholder</text>
-</svg>
-`;
-  writeFileSync(absPath, svg, "utf8");
-}
-
-/** Returns a function that takes the accent color and returns an SVG fragment. */
-function kindGlyphPath(
-  kind: PromptVariant["kind"],
-  cx: number,
-  cy: number,
-): (color: string) => string {
-  const size = 200;
-  const half = size / 2;
-  switch (kind) {
-    case "icon":
-      // Circle inside a rounded square
-      return (color) =>
-        `<rect x="${cx - half}" y="${cy - half}" width="${size}" height="${size}" rx="40" ry="40" fill="none" stroke="${color}" stroke-width="6" />` +
-        `<circle cx="${cx}" cy="${cy}" r="${half * 0.45}" fill="none" stroke="${color}" stroke-width="6" />`;
-    case "background":
-      // Wide horizontal lines
-      return (color) =>
-        Array.from({ length: 5 })
-          .map(
-            (_, i) =>
-              `<rect x="${cx - 280}" y="${cy - 120 + i * 60}" width="560" height="14" rx="7" ry="7" fill="${color}" opacity="${0.15 + i * 0.05}" />`,
-          )
-          .join("");
-    case "diagram":
-      // Two boxes + arrow
-      return (color) =>
-        `<rect x="${cx - 220}" y="${cy - 60}" width="160" height="120" rx="20" ry="20" fill="none" stroke="${color}" stroke-width="6" />` +
-        `<rect x="${cx + 60}"  y="${cy - 60}" width="160" height="120" rx="20" ry="20" fill="none" stroke="${color}" stroke-width="6" />` +
-        `<line x1="${cx - 60}" y1="${cy}" x2="${cx + 60}" y2="${cy}" stroke="${color}" stroke-width="6" />` +
-        `<polygon points="${cx + 60},${cy} ${cx + 40},${cy - 12} ${cx + 40},${cy + 12}" fill="${color}" />`;
-    case "illustration":
-    default:
-      // Stacked rounded panels
-      return (color) =>
-        Array.from({ length: 3 })
-          .map(
-            (_, i) =>
-              `<rect x="${cx - 180 + i * 14}" y="${cy - 120 + i * 14}" width="320" height="180" rx="24" ry="24" fill="none" stroke="${color}" stroke-width="6" opacity="${1 - i * 0.3}" />`,
-          )
-          .join("");
-  }
-}
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  writeFileSync(absPath, renderSvg(variant), "utf8");
 }
 
 // ─── Manifest ──────────────────────────────────────────────────────────────
