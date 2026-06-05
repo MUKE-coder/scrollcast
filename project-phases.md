@@ -44,14 +44,14 @@ Tasks:
 **Goal:** The building blocks every scene shares, theme-aware.
 
 Tasks:
-- [ ] `Card` (rounded, soft shadow Apple / hairline border Vercel).
-- [ ] `Icon` wrapper: resolves to Geist icons (Vercel) or clean line icons (Apple); never emojis.
-- [ ] `AnimatedArrow` / connector (for diagrams; draws on with spring).
-- [ ] `Badge` / `Pill` / `Tag`.
-- [ ] `Title` / `Kicker` / `BodyText` typographic components bound to theme ramp.
-- [ ] `CodeEditor` shell: window chrome, collapsed/expand state, line numbers, filename tab. (Typing logic comes in Phase 5.)
-- [ ] `BackgroundLayer`: renders the theme's background + generated background image slot.
-- [ ] A "component gallery" composition for QA.
+- [x] `Card` (rounded, soft shadow Apple / hairline border Vercel).
+- [x] `Icon` wrapper: resolves to Geist icons (Vercel) or clean line icons (Apple); never emojis.
+- [x] `AnimatedArrow` / connector (for diagrams; draws on with spring).
+- [x] `Badge` / `Pill` / `Tag`.
+- [x] `Title` / `Kicker` / `BodyText` typographic components bound to theme ramp.
+- [x] `CodeEditor` shell: window chrome, collapsed/expand state, line numbers, filename tab. (Typing logic comes in Phase 5.)
+- [x] `BackgroundLayer`: renders the theme's background + generated background image slot.
+- [x] A "component gallery" composition for QA.
 
 **Exit criteria:** Gallery composition shows every component correctly in both themes.
 

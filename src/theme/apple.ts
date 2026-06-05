@@ -82,4 +82,14 @@ export const apple: Theme = {
     maxContentWidth: 1400,
     grid: 8,
   },
+
+  icon: {
+    strokeWidth: 2,
+    sizes: { sm: 16, md: 24, lg: 32, xl: 48, "2xl": 64 },
+  },
+
+  code: {
+    prismTheme: "vsDark", // light-on-dark per design-style-guide §4
+    chromeDotStyle: "color",
+  },
 };

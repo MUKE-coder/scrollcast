@@ -83,4 +83,14 @@ export const vercel: Theme = {
     maxContentWidth: 1400,
     grid: 8,
   },
+
+  icon: {
+    strokeWidth: 1.5, // hairline, Geist-style
+    sizes: { sm: 16, md: 24, lg: 32, xl: 48, "2xl": 64 },
+  },
+
+  code: {
+    prismTheme: "nightOwl", // muted Geist-leaning palette
+    chromeDotStyle: "monochrome",
+  },
 };

@@ -113,4 +113,28 @@ export type Theme = {
     /** Spacing grid base (px). */
     grid: 8;
   };
+
+  /**
+   * Icon tokens. Both themes use a single line-icon set (lucide) for naming
+   * consistency; the visual difference between themes comes from `strokeWidth`
+   * (Apple = 2 rounded; Vercel = 1.5 hairline, closer to Geist).
+   */
+  icon: {
+    strokeWidth: number;
+    sizes: {
+      sm: 16;
+      md: 24;
+      lg: 32;
+      xl: 48;
+      "2xl": 64;
+    };
+  };
+
+  /** CodeEditor tokens. */
+  code: {
+    /** Which prism-react-renderer theme to apply. */
+    prismTheme: "vsDark" | "nightOwl" | "vsLight" | "github";
+    /** Window-chrome traffic-light style. */
+    chromeDotStyle: "color" | "monochrome";
+  };
 };

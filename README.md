@@ -103,7 +103,7 @@ Tracked in [project-phases.md](project-phases.md). The repo is built strictly ph
 
 - [x] Phase 0 — Foundation & Scaffolding
 - [x] Phase 1 — Theme System
-- [ ] Phase 2 — Reusable Component Library
+- [x] Phase 2 — Reusable Component Library
 - [ ] Phase 3 — Ingest Pipeline
 - [ ] Phase 4 — Asset Prompt + Generation Pipeline
 - [ ] Phase 5 — Scenes & Code-Typing Effect

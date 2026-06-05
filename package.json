@@ -17,6 +17,7 @@
   "dependencies": {
     "@remotion/cli": "4.0.472",
     "@remotion/google-fonts": "^4.0.472",
+    "lucide-react": "^1.17.0",
     "prism-react-renderer": "^2.4.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
