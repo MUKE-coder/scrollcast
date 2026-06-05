@@ -127,11 +127,11 @@ Tasks:
 **Goal:** One-command production + a clean clone-and-run experience.
 
 Tasks:
-- [ ] `npm run render -- --props='{"theme":"vercel"}'` → MP4 in `/out`; same for apple.
-- [ ] Document the full per-video workflow in `README.md` (research prompt → drop file → ingest → assets → dev → render).
-- [ ] Add a `examples/penetration-testing/` folder with the sample `topic-details.md` and its generated `video-plan.json` as a reference.
-- [ ] Add troubleshooting notes (missing API key, asset failures, font loading, render OOM).
-- [ ] Final QA against `project-description.md` §7 "Definition of done" checklist.
+- [x] `npm run render -- --props='{"theme":"vercel"}'` → MP4 in `/out`; same for apple.
+- [x] Document the full per-video workflow in `README.md` (research prompt → drop file → ingest → assets → dev → render).
+- [x] Add a `examples/penetration-testing/` folder with the sample `topic-details.md` and its generated `video-plan.json` as a reference.
+- [x] Add troubleshooting notes (missing API key, asset failures, font loading, render OOM).
+- [x] Final QA against `project-description.md` §7 "Definition of done" checklist.
 
 **Exit criteria:** A new machine can clone the repo, follow the README, and produce a finished themed MP4 from a fresh topic.
 

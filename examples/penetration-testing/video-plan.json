@@ -1,0 +1,311 @@
+{
+  "meta": {
+    "title": "Penetration Testing",
+    "theme": "vercel",
+    "totalDurationFrames": 14400,
+    "totalDurationSeconds": 480,
+    "fps": 30,
+    "width": 1920,
+    "height": 1080,
+    "generatedAt": "2026-06-05T06:40:42.457Z",
+    "source": "topic-details.md"
+  },
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "intro",
+      "title": "Penetration Testing",
+      "kicker": "An animated technical explainer",
+      "narration": "A penetration test (pentest) is an authorized, simulated cyberattack against a system to find exploitable weaknesses before real attackers do. It follows a disciplined lifecycle — scope and rules of engagement, reconnaissance, scanning, exploitation, post-exploitation, and reporting — so findings are repeatable and defensible. It is distinct from a vulnerability scan: scans list possible weaknesses; a pentest proves impact by chaining them into a working attack path. Common engagement styles are black-box (no prior info), gray-box (some info, e.g. a low-priv account), and white-box (full source/architecture access). The deliverable is a report with reproducible evidence, business impact, CVSS-style severity, and prioritized remediation — not just a list of CVEs.",
+      "bullets": [
+        "A penetration test (pentest) is an authorized, simulated cyberattack against a system to find exploitable weaknesses before real attackers do.",
+        "It follows a disciplined lifecycle — scope and rules of engagement, reconnaissance, scanning, exploitation, post-exploitation, and reporting — so findings are repeatable and defensible.",
+        "It is distinct from a vulnerability scan: scans list possible weaknesses; a pentest proves impact by chaining them into a working attack path.",
+        "Common engagement styles are black-box (no prior info), gray-box (some info, e.g. a low-priv account), and white-box (full source/architecture access).",
+        "The deliverable is a report with reproducible evidence, business impact, CVSS-style severity, and prioritized remediation — not just a list of CVEs."
+      ],
+      "assetRefs": [
+        {
+          "id": "intro-bg",
+          "kind": "background",
+          "description": "Abstract introductory background for Penetration Testing"
+        },
+        {
+          "id": "intro-mark",
+          "kind": "illustration",
+          "description": "Conceptual hero illustration representing Penetration Testing"
+        }
+      ],
+      "durationInFrames": 421
+    },
+    {
+      "id": "what",
+      "type": "concept",
+      "title": "What is penetration testing?",
+      "kicker": "Definition",
+      "narration": "A penetration test is an authorized security assessment in which testers act as adversaries against a defined target — a web app, an API, a network segment, a mobile app, a cloud account, or a physical site — within strict legal and operational boundaries. The goal is to demonstrate real-world risk: not only \"this version of nginx is outdated\" but \"this outdated nginx, combined with a writable upload path and an unscoped IAM role, lets us read every customer's invoice.\"\n\nThe core mental model is the attack chain: a single vulnerability rarely matters; multiple low-severity flaws chained together produce critical impact. Defenders think in lists of CVEs; pentesters think in paths from entry point to objective.",
+      "bullets": [
+        "Scope: the systems, IPs, accounts, and time windows in-bounds.",
+        "Rules of engagement (RoE): allowed techniques, disallowed actions (e.g. no DoS, no data exfil), emergency contacts.",
+        "Asset: any system or data the target cares about.",
+        "Vulnerability: a flaw that could be exploited.",
+        "Exploit: code or technique that does exploit it."
+      ],
+      "assetRefs": [
+        {
+          "id": "what-icon",
+          "kind": "icon",
+          "description": "Conceptual icon representing Penetration Testing"
+        }
+      ],
+      "durationInFrames": 983
+    },
+    {
+      "id": "why",
+      "type": "concept",
+      "title": "Why it matters",
+      "kicker": "Impact",
+      "narration": "Defenders can't audit every line of code, every dependency, and every misconfiguration; attackers only need one path. A pentest closes that asymmetry by paying experts to find a path before an attacker does. Concrete consequences:",
+      "bullets": [
+        "A single overlooked SQL injection in a checkout endpoint has, in real reported breaches, exposed millions of customer records and triggered seven- to nine-figure regulatory fines under GDPR / CCPA / HIPAA.",
+        "An unpatched server-side request forgery (SSRF) in a cloud-hosted app has repeatedly leaked AWS IAM credentials via the metadata service (IMDSv1), giving attackers role-level access to S3 and KMS within minutes.",
+        "A weak SSO assertion or missing audience-check on a SAML response has allowed full account takeover with no password ever touched.",
+        "Regulated organizations (PCI-DSS, HIPAA, SOC 2, ISO 27001) — pentests are often required at least annually and after major changes.",
+        "Product companies before launch — to ship without a known critical."
+      ],
+      "assetRefs": [
+        {
+          "id": "why-icon",
+          "kind": "icon",
+          "description": "Risk-and-consequence icon for Penetration Testing"
+        }
+      ],
+      "durationInFrames": 983
+    },
+    {
+      "id": "how-scoping-and-rules-of-engagem",
+      "type": "diagram",
+      "title": "Scoping and Rules of Engagement",
+      "kicker": "How · step 1",
+      "narration": "What happens: tester and client agree, in writing, on what is in scope (IPs, domains, accounts, mobile apps, cloud tenants), what is out of scope, what techniques are allowed (no DoS, no social engineering unless explicitly approved, no data destruction), the testing window, off-hours rules, emergency contacts, and a \"stop test\" channel. A signed Authorization to Test letter is collected — without it, the test is illegal.\n\nVisual idea: a contract document on the left, an arrow into a fenced \"in-scope\" box (containing three server icons and one cloud icon) on the right. Out-of-scope items are shown greyed out behind a dotted line. A small \"Authorization to Test\" badge appears with a signature animation.",
+      "bullets": [],
+      "assetRefs": [
+        {
+          "id": "how-scoping-and-rules-of-engagem-diagram",
+          "kind": "diagram",
+          "description": "a contract document on the left, an arrow into a fenced \"in-scope\" box (containing three server icons and one cloud icon) on the right. Out-of-scope items are shown greyed out behind a dotted line. A small \"Authorization to Test\" badge appears with a signature animation."
+        }
+      ],
+      "durationInFrames": 1194
+    },
+    {
+      "id": "how-reconnaissance",
+      "type": "code",
+      "title": "Reconnaissance",
+      "kicker": "How · step 2",
+      "narration": "What happens: gather publicly-available information about the target without sending suspicious traffic — domains, subdomains, exposed services, technologies in use, leaked credentials, employee names for context. Passive recon uses third-party data (DNS, certificate transparency logs, search engines, GitHub); active recon sends light probes (DNS queries, port scans within scope).\n\nVisual idea: a center node labelled with the target's domain; lines radiate out to small cards representing subdomains, cert transparency logs, exposed S3 buckets, leaked credentials in pastebin-style sources, and GitHub repos. Each card animates in one at a time.",
+      "bullets": [],
+      "codeBlocks": [
+        {
+          "filename": "snippet-1.sh",
+          "language": "bash",
+          "code": "# Enumerate subdomains using passive sources (no traffic to target).\nsubfinder -d example.com -silent | tee subs.txt\n\n# Resolve and probe which are live over HTTP(S).\ncat subs.txt | dnsx -silent -a -resp-only | httpx -silent -title -tech-detect"
+        }
+      ],
+      "assetRefs": [
+        {
+          "id": "how-reconnaissance-icon",
+          "kind": "icon",
+          "description": "Icon representing Reconnaissance (language: bash)"
+        }
+      ],
+      "durationInFrames": 1335
+    },
+    {
+      "id": "how-scanning-and-enumeration",
+      "type": "code",
+      "title": "Scanning and Enumeration",
+      "kicker": "How · step 3",
+      "narration": "What happens: against in-scope hosts, identify open ports, running service versions, web routes, parameters, and authentication mechanisms. This is the bridge from \"what exists\" to \"what might be exploitable.\"\n\nVisual idea: a vertical list of ports (22, 80, 443, 3306, 8080) with each row revealing a service banner (\"OpenSSH 9.0\", \"nginx 1.18.0\", \"MySQL 8.0\", \"Tomcat 9 — login page\"). A side panel shows a directory tree the scanner is enumerating: /login, /api/v1/users, /admin, /.git/HEAD.",
+      "bullets": [],
+      "codeBlocks": [
+        {
+          "filename": "snippet-1.sh",
+          "language": "bash",
+          "code": "# Service version scan, all TCP ports, default safe scripts.\nnmap -sV -sC -p- --min-rate 1000 -oA nmap-full 10.0.0.42\n\n# Directory and parameter enumeration on a discovered web app.\nffuf -u https://target.example.com/FUZZ \\\n     -w /usr/share/wordlists/dirb/common.txt \\\n     -mc 200,301,302,401,403"
+        }
+      ],
+      "assetRefs": [
+        {
+          "id": "how-scanning-and-enumeration-icon",
+          "kind": "icon",
+          "description": "Icon representing Scanning and Enumeration (language: bash)"
+        }
+      ],
+      "durationInFrames": 1335
+    },
+    {
+      "id": "how-vulnerability-analysis",
+      "type": "diagram",
+      "title": "Vulnerability Analysis",
+      "kicker": "How · step 4",
+      "narration": "What happens: take the enumerated surface and reason about where it could be broken. This is more than running a scanner: it is reading auth flows for missing checks, looking at IDs in URLs for IDOR, testing input validation manually, reviewing the OWASP Top 10 (injection, broken access control, SSRF, deserialization, etc.) against each endpoint. Findings are recorded with proof of where the flaw lives, not yet what it would do.\n\nVisual idea: a table with three columns — Surface (e.g. \"POST /api/v1/orders\"), Hypothesis (e.g. \"missing tenant check, IDOR on order_id\"), and Evidence (e.g. \"request with another tenant's order_id returned 200 + body\"). Rows fill in one at a time, color-coded by severity.",
+      "bullets": [],
+      "assetRefs": [
+        {
+          "id": "how-vulnerability-analysis-diagram",
+          "kind": "diagram",
+          "description": "a table with three columns — Surface (e.g. \"POST /api/v1/orders\"), Hypothesis (e.g. \"missing tenant check, IDOR on order_id\"), and Evidence (e.g. \"request with another tenant's order_id returned 200 + body\"). Rows fill in one at a time, color-coded by severity."
+        }
+      ],
+      "durationInFrames": 1194
+    },
+    {
+      "id": "how-exploitation",
+      "type": "code",
+      "title": "Exploitation",
+      "kicker": "How · step 5",
+      "narration": "What happens: prove the impact. The tester chains the flaws found in Step 4 into a working attack path — for example, an unauthenticated SSRF that hits the cloud metadata endpoint, retrieves IAM credentials, and uses them to list S3 buckets containing PII. Exploits are run only within the agreed RoE, and destructive payloads are avoided (read, don't write or delete).\n\nVisual idea: a sequence of three boxes left-to-right — \"Unauthenticated SSRF endpoint\" → \"Hits 169.254.169.254 metadata\" → \"AWS access key retrieved\" → \"Lists bucket: customer-invoices-prod\". Arrows animate in one by one, with a small lock icon turning open at each step.",
+      "bullets": [],
+      "codeBlocks": [
+        {
+          "filename": "snippet-1.py",
+          "language": "python",
+          "code": "import requests\n\n# Demonstrates SSRF retrieving instance metadata credentials.\n# Run only against systems you are authorized to test.\ntarget = \"https://app.example.com/api/fetch\"\nmetadata_url = \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\"\n\nr = requests.get(target, params={\"url\": metadata_url}, timeout=10)\nrole = r.text.strip().splitlines()[0]\ncreds = requests.get(target, params={\"url\": metadata_url + role}, timeout=10).json()\n\nprint(\"AccessKeyId:\", creds[\"AccessKeyId\"])\nprint(\"Expiration:\", creds[\"Expiration\"])"
+        }
+      ],
+      "assetRefs": [
+        {
+          "id": "how-exploitation-icon",
+          "kind": "icon",
+          "description": "Icon representing Exploitation (language: python)"
+        }
+      ],
+      "durationInFrames": 1335
+    },
+    {
+      "id": "how-post-exploitation",
+      "type": "code",
+      "title": "Post-Exploitation",
+      "kicker": "How · step 6",
+      "narration": "What happens: with initial access, the tester evaluates how far the access reaches — lateral movement, privilege escalation, persistence (if RoE allows), and data the attacker could now reach. The point is not to pwn everything; it is to measure blast radius so the report can say \"this one flaw led to read access to N customer records\" in concrete terms.\n\nVisual idea: a network map. Initial foothold node is highlighted; lines extend to other nodes as the tester demonstrates lateral access (web-app → internal-api → database). At each hop, a small \"evidence\" pane shows the captured screenshot or token.",
+      "bullets": [],
+      "codeBlocks": [
+        {
+          "filename": "snippet-1.sh",
+          "language": "bash",
+          "code": "# After obtaining an IAM key, enumerate accessible AWS resources.\nexport AWS_ACCESS_KEY_ID=AKIA...\nexport AWS_SECRET_ACCESS_KEY=...\n\naws sts get-caller-identity\naws s3 ls\naws iam list-attached-role-policies --role-name app-prod-role"
+        }
+      ],
+      "assetRefs": [
+        {
+          "id": "how-post-exploitation-icon",
+          "kind": "icon",
+          "description": "Icon representing Post-Exploitation (language: bash)"
+        }
+      ],
+      "durationInFrames": 1335
+    },
+    {
+      "id": "how-reporting",
+      "type": "code",
+      "title": "Reporting",
+      "kicker": "How · step 7",
+      "narration": "What happens: every finding is written up with a clear title, severity (often CVSS v3.1), affected component, reproduction steps, evidence (screenshots, request/response pairs), business impact in the client's own terms, and a specific remediation. An executive summary gives the C-suite the headline; a technical section gives engineers everything they need to fix and verify.\n\nVisual idea: a report cover page slides in, then opens to a two-column layout. Left: an \"Executive summary\" panel with a red/amber/green chart of findings by severity. Right: a finding template with sections (Title, CVSS, Reproduction, Impact, Remediation) filling in line-by-line.",
+      "bullets": [],
+      "codeBlocks": [
+        {
+          "filename": "snippet-1.md",
+          "language": "markdown",
+          "code": "## Finding F-07 — Server-Side Request Forgery in /api/fetch\n**Severity:** Critical (CVSS 9.1)\n**Affected:** app.example.com — endpoint POST /api/fetch (url parameter)\n**Reproduction:**\n  1. Log in as any user.\n  2. POST {\"url\": \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\"}\n  3. Response contains the EC2 IAM role name.\n  4. Re-issue with /role-name appended to retrieve temporary AWS credentials.\n**Impact:** Retrieved AWS credentials grant read access to S3 bucket\n  `customer-invoices-prod` (47,812 invoice PDFs sampled).\n**Remediation:** Validate user-supplied URLs against an allowlist of hosts;\n  block link-local (169.254.0.0/16) and private (RFC 1918) ranges;\n  enforce IMDSv2 (token-required) on EC2 instances."
+        }
+      ],
+      "assetRefs": [
+        {
+          "id": "how-reporting-icon",
+          "kind": "icon",
+          "description": "Icon representing Reporting (language: markdown)"
+        }
+      ],
+      "durationInFrames": 1335
+    },
+    {
+      "id": "how-retest",
+      "type": "diagram",
+      "title": "Retest",
+      "kicker": "How · step 8",
+      "narration": "What happens: after the client remediates, the tester verifies each finding is actually fixed — not just acknowledged. Retests are scoped and short, but essential: a \"fixed\" finding that wasn't actually fixed is worse than not retesting.\n\nVisual idea: the report's findings list reappears; each row toggles from \"Open\" to \"Verified Fixed\" (green) or \"Still Vulnerable\" (red) as the tester re-runs the reproduction.",
+      "bullets": [],
+      "assetRefs": [
+        {
+          "id": "how-retest-diagram",
+          "kind": "diagram",
+          "description": "the report's findings list reappears; each row toggles from \"Open\" to \"Verified Fixed\" (green) or \"Still Vulnerable\" (red) as the tester re-runs the reproduction."
+        }
+      ],
+      "durationInFrames": 1194
+    },
+    {
+      "id": "comparison",
+      "type": "comparison",
+      "title": "Key comparisons",
+      "kicker": "Side-by-side",
+      "narration": "",
+      "bullets": [
+        "Black-box — tester gets only what an external attacker would have. Realistic, but more time spent on recon and less on depth.",
+        "Gray-box — tester gets a low-privilege account and basic architecture info. Best ROI for most web/API engagements.",
+        "White-box — tester gets source, configs, architecture. Highest depth; closest to a code-review-plus-pentest hybrid."
+      ],
+      "assetRefs": [
+        {
+          "id": "compare-left-icon",
+          "kind": "icon",
+          "description": "Left-side comparison subject for Penetration Testing"
+        },
+        {
+          "id": "compare-right-icon",
+          "kind": "icon",
+          "description": "Right-side comparison subject for Penetration Testing"
+        }
+      ],
+      "durationInFrames": 913
+    },
+    {
+      "id": "recap",
+      "type": "recap",
+      "title": "Recap",
+      "kicker": "What to remember",
+      "narration": "A pentest is an authorized, simulated attack that proves impact, not just lists weaknesses. It follows a disciplined lifecycle: scope → recon → scan → analyze → exploit → post-exploit → report → retest. The deliverable's value lies in reproducible evidence, real business impact, and specific remediation — written for both executives and engineers. A pentest is one piece of a security program; pair it with scanning, code review, threat modeling, and (where applicable) red teaming. Most critical findings come from chains of low-severity issues, not from a single CVE.",
+      "bullets": [
+        "A pentest is an authorized, simulated attack that proves impact, not just lists weaknesses.",
+        "It follows a disciplined lifecycle: scope → recon → scan → analyze → exploit → post-exploit → report → retest.",
+        "The deliverable's value lies in reproducible evidence, real business impact, and specific remediation — written for both executives and engineers.",
+        "A pentest is one piece of a security program; pair it with scanning, code review, threat modeling, and (where applicable) red teaming.",
+        "Most critical findings come from chains of low-severity issues, not from a single CVE."
+      ],
+      "assetRefs": [
+        {
+          "id": "recap-bg",
+          "kind": "background",
+          "description": "Closing recap background for Penetration Testing"
+        }
+      ],
+      "durationInFrames": 562
+    },
+    {
+      "id": "outro",
+      "type": "outro",
+      "title": "Thanks for watching",
+      "narration": "",
+      "bullets": [],
+      "assetRefs": [
+        {
+          "id": "outro-mark",
+          "kind": "illustration",
+          "description": "Closing brand mark for the Penetration Testing video"
+        }
+      ],
+      "durationInFrames": 281
+    }
+  ]
+}
