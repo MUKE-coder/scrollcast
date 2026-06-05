@@ -29,11 +29,11 @@ Tasks:
 **Goal:** Two fully-tokenized themes that re-skin everything via one prop.
 
 Tasks:
-- [ ] Implement `src/theme/apple.ts` and `src/theme/vercel.ts` using the exact tokens in `design-style-guide.md` (colors, type, spacing, radii, shadows, motion).
-- [ ] For the Vercel theme, follow the `create-remotion-geist` skill: dark background, Geist font, 10-step color scale, spring animations, Geist icons.
-- [ ] Build `ThemeProvider.tsx` exposing a `useTheme()` hook; theme chosen by a `theme: "apple" | "vercel"` composition prop.
-- [ ] Wire the theme prop through `Root.tsx` so it can be set per-render (`--props='{"theme":"vercel"}'`).
-- [ ] Build a `/dev` test composition that renders a sample of every token (swatches, type ramp, buttons, a card) for visual QA in both themes.
+- [x] Implement `src/theme/apple.ts` and `src/theme/vercel.ts` using the exact tokens in `design-style-guide.md` (colors, type, spacing, radii, shadows, motion).
+- [x] For the Vercel theme, follow the `create-remotion-geist` skill: dark background, Geist font, 10-step color scale, spring animations, Geist icons.
+- [x] Build `ThemeProvider.tsx` exposing a `useTheme()` hook; theme chosen by a `theme: "apple" | "vercel"` composition prop.
+- [x] Wire the theme prop through `Root.tsx` so it can be set per-render (`--props='{"theme":"vercel"}'`).
+- [x] Build a `/dev` test composition that renders a sample of every token (swatches, type ramp, buttons, a card) for visual QA in both themes.
 
 **Exit criteria:** Toggling the `theme` prop visibly switches the test composition between a clean light Apple look and a dark Geist look, with zero hard-coded colors in components.
 

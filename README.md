@@ -102,7 +102,7 @@ npm run render -- --props='{"theme":"apple"}'
 Tracked in [project-phases.md](project-phases.md). The repo is built strictly phase by phase; each phase has an Exit criteria checkpoint before the next begins.
 
 - [x] Phase 0 — Foundation & Scaffolding
-- [ ] Phase 1 — Theme System
+- [x] Phase 1 — Theme System
 - [ ] Phase 2 — Reusable Component Library
 - [ ] Phase 3 — Ingest Pipeline
 - [ ] Phase 4 — Asset Prompt + Generation Pipeline
