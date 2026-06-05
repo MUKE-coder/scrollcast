@@ -112,11 +112,11 @@ Tasks:
 **Goal:** Make it feel finished (minus VO, which the user adds later).
 
 Tasks:
-- [ ] Add a background-music slot (`<Audio>`), with a clearly-marked silent/placeholder track and volume ducking config; document where the user drops their own VO track.
-- [ ] Add consistent scene transitions (cross-fade / slide) via `@remotion/transitions`.
-- [ ] Add subtle motion polish: spring entrances, parallax on backgrounds, easing per design guide's motion tokens.
-- [ ] Accessibility/legibility pass: contrast, safe margins (title-safe area), font sizes readable at 1080p.
-- [ ] Performance pass: lazy-load heavy assets, avoid layout thrash, keep render times reasonable.
+- [x] Add a background-music slot (`<Audio>`), with a clearly-marked silent/placeholder track and volume ducking config; document where the user drops their own VO track.
+- [x] Add consistent scene transitions (cross-fade / slide) via `@remotion/transitions`.
+- [x] Add subtle motion polish: spring entrances, parallax on backgrounds, easing per design guide's motion tokens.
+- [x] Accessibility/legibility pass: contrast, safe margins (title-safe area), font sizes readable at 1080p.
+- [x] Performance pass: lazy-load heavy assets, avoid layout thrash, keep render times reasonable.
 
 **Exit criteria:** Smooth transitions throughout, music slot working, no jarring cuts; both themes feel polished.
 

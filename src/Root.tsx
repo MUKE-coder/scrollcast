@@ -2,14 +2,23 @@ import "./theme/loadFonts";
 
 import React from "react";
 import { Composition, type CalculateMetadataFunction } from "remotion";
-import { MainVideo, VIDEO_PLAN, type MainVideoProps } from "./MainVideo";
+import {
+  MainVideo,
+  compositionFramesFor,
+  type MainVideoProps,
+} from "./MainVideo";
 import { ThemeGallery } from "./dev/ThemeGallery";
 import { ComponentGallery } from "./dev/ComponentGallery";
 
+/**
+ * Composition duration depends on the chosen theme because each theme
+ * has its own transition frame count (Apple 15f / Vercel 12f) — see
+ * `MainVideo.compositionFramesFor`.
+ */
 const calculateMainMetadata: CalculateMetadataFunction<MainVideoProps> = async ({
   props,
 }) => ({
-  durationInFrames: VIDEO_PLAN.meta.totalDurationFrames,
+  durationInFrames: compositionFramesFor(props.theme),
   props,
 });
 
@@ -19,7 +28,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MainVideo"
         component={MainVideo}
-        durationInFrames={VIDEO_PLAN.meta.totalDurationFrames}
+        durationInFrames={compositionFramesFor("vercel")}
         fps={30}
         width={1920}
         height={1080}

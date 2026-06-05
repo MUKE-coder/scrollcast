@@ -107,5 +107,5 @@ Tracked in [project-phases.md](project-phases.md). The repo is built strictly ph
 - [x] Phase 3 — Ingest Pipeline
 - [x] Phase 4 — Asset Prompt + Generation Pipeline
 - [x] Phase 5 — Scenes & Code-Typing Effect
-- [ ] Phase 6 — Audio, Transitions & Polish
+- [x] Phase 6 — Audio, Transitions & Polish
 - [ ] Phase 7 — Render, Docs & Repeatability

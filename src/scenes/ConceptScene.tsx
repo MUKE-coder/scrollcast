@@ -9,7 +9,7 @@ import React from "react";
 import { Sparkles, Info, Lightbulb, Workflow, ShieldCheck } from "lucide-react";
 import { Scene, useElementSpring } from "./Scene";
 import { SceneHeader } from "./SceneHeader";
-import { BodyText, Card, Icon } from "../components";
+import { BodyText, Card, Caption, Icon } from "../components";
 import { useTheme } from "../theme/ThemeProvider";
 import type { Scene as PlanScene } from "../video-plan.schema";
 
@@ -55,7 +55,11 @@ export const ConceptScene: React.FC<{ scene: PlanScene }> = ({ scene }) => {
             />
           ))}
         </div>
-        <ConceptSideIcon icon={FallbackIcon} />
+        <ConceptSideIcon
+          icon={FallbackIcon}
+          label={scene.kicker ?? "Concept"}
+          title={scene.title}
+        />
       </div>
     </Scene>
   );
@@ -90,7 +94,12 @@ const ConceptBullet: React.FC<{ text: string; delay: number }> = ({ text, delay 
   );
 };
 
-const ConceptSideIcon: React.FC<{ icon: typeof Sparkles }> = ({ icon }) => {
+const ConceptSideIcon: React.FC<{
+  icon: typeof Sparkles;
+  label: string;
+  title: string;
+}> = ({ icon, label, title }) => {
+  const t = useTheme();
   const s = useElementSpring(24, 22);
   return (
     <div
@@ -103,17 +112,44 @@ const ConceptSideIcon: React.FC<{ icon: typeof Sparkles }> = ({ icon }) => {
         transform: `scale(${0.92 + s * 0.08})`,
       }}
     >
-      <Card padding="lg" style={{ aspectRatio: "1 / 1", maxWidth: 420, width: "100%" }}>
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon icon={icon} size="2xl" color="accent" />
+      <Card
+        padding="lg"
+        style={{
+          aspectRatio: "1 / 1",
+          maxWidth: 420,
+          width: "100%",
+          background: `radial-gradient(ellipse at center, ${t.color.accentSoft} 0%, ${t.color.bgElevated} 70%)`,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: t.space.md,
+        }}
+      >
+        <Icon icon={icon} size="2xl" color="accent" />
+        <div style={{ textAlign: "center" }}>
+          <Caption
+            style={{
+              color: t.color.textTertiary,
+              fontFamily: t.font.mono,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              fontSize: 16,
+            }}
+          >
+            {label}
+          </Caption>
+          <BodyText
+            style={{
+              fontSize: 22,
+              fontWeight: 600,
+              color: t.color.textPrimary,
+              marginTop: 4,
+              maxWidth: 280,
+            }}
+          >
+            {title}
+          </BodyText>
         </div>
       </Card>
     </div>
