@@ -183,8 +183,20 @@ Required sections: `## TL;DR`, `## What it is`, `## Why it matters`, `## How it'
 **`npm run assets:gen` says "GEMINI_API_KEY not set in .env"**
 The pipeline still writes theme-correct SVG placeholders so the render never breaks. To upgrade to real images: drop your key into `.env` (copy from `.env.example` first) and re-run. The cache lives in `public/assets/manifest.json` — only changed prompts get re-billed.
 
-**`npm run assets:gen` → "404 Not Found — models/imagen-... is not found for API version v1beta"**
-Your key doesn't have access to the Imagen model. The default model is now `gemini-2.5-flash-image-preview`, which uses Gemini's native image generation via `:generateContent` and works on any standard Gemini API key — if you see this error you're on an older revision; pull `main`. To force a specific model, pass `--model=<id>`; the script auto-routes `gemini-*` to `:generateContent` and `imagen-*` to `:predict`.
+**`npm run assets:gen` → "404 Not Found — models/<id> is not found for API version v1beta, or is not supported for generateContent / predict"**
+Your `GEMINI_API_KEY` doesn't have access to that specific image-gen model. Gemini's image-gen model names + availability shift fairly often. Discover what your key can call:
+
+```bash
+npm run assets:gen -- --list-models
+```
+
+That prints every model the key can hit and which methods each supports. Pick one whose name contains `image` AND whose methods include `generateContent` (or one whose name starts with `imagen-` AND whose methods include `predict`), then:
+
+```bash
+npm run assets:gen -- --model=<id-from-list>
+```
+
+The script auto-routes `gemini-*` → `:generateContent` and `imagen-*` → `:predict`, so you don't need to think about the endpoint.
 
 **An asset failed mid-run**
 `scripts/generate-assets.ts` retries 3× with exponential backoff (1s/3s/8s). Any asset that still fails falls back to an SVG placeholder, and the batch keeps going — the manifest flags `placeholder: true` so a later `npm run assets:gen` (or `--force`) will retry the failed ones.

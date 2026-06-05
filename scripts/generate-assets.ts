@@ -54,16 +54,17 @@ const MANIFEST_PATH = join(ASSETS_DIR, "manifest.json");
 // ─── Gemini image-gen REST ─────────────────────────────────────────────────
 
 /**
- * Default model: Gemini Nano Banana image generation. It uses the same
- * `generateContent` endpoint as Gemini text models, so any standard
- * GEMINI_API_KEY works without paid-tier Imagen access. Override with
- * `--model=imagen-3.0-generate-002` if your key has Imagen access.
+ * Default image-gen model. Gemini image-gen model names and availability
+ * shift fairly often; if the default 404s on your key, run
+ *   `npm run assets:gen -- --list-models`
+ * to print every model your key can call (with the methods each supports),
+ * then pass `--model=<id>` to pick one.
  *
  * The script auto-detects which API to call by the model name prefix:
  *   `gemini-*` → `:generateContent` (image returned in inlineData parts)
  *   `imagen-*` → `:predict` (image returned in predictions[0].bytesBase64Encoded)
  */
-const DEFAULT_MODEL = "gemini-2.5-flash-image-preview";
+const DEFAULT_MODEL = "gemini-2.0-flash-preview-image-generation";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const RETRY_DELAYS_MS = [1000, 3000, 8000]; // 3 attempts after the first
 
@@ -75,6 +76,15 @@ const apiKindFor = (model: string): ApiKind =>
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  // Diagnostic short-circuit: list every model the user's key can call.
+  // Useful when an image model 404s and you need to pick one that exists.
+  if (args.listModels) {
+    const key = process.env.GEMINI_API_KEY?.trim() || "";
+    if (!key) fail("GEMINI_API_KEY not set in .env — required for --list-models.");
+    await listModels(key);
+    return;
+  }
 
   if (!existsSync(PROMPTS_DIR)) {
     fail(
@@ -188,6 +198,9 @@ async function main() {
   );
   if (placeholders > 0 && !usePlaceholder) {
     log(`some calls fell back to placeholders — see errors above.`);
+    log(`tip: run 'npm run assets:gen -- --list-models' to see which models`);
+    log(`     your GEMINI_API_KEY can actually call, then re-run with`);
+    log(`     '--model=<id>'.`);
   }
 }
 
@@ -479,14 +492,17 @@ function parseArgs(argv: string[]): {
   force: boolean;
   dryRun: boolean;
   model: string;
+  listModels: boolean;
 } {
   let theme: PlanThemeName | undefined;
   let force = false;
   let dryRun = false;
   let model = DEFAULT_MODEL;
+  let listModels = false;
   for (const arg of argv) {
     if (arg === "--force") force = true;
     else if (arg === "--dry-run") dryRun = true;
+    else if (arg === "--list-models") listModels = true;
     else if (arg.startsWith("--theme=")) {
       const v = arg.slice("--theme=".length);
       if (v !== "apple" && v !== "vercel") {
@@ -500,7 +516,61 @@ function parseArgs(argv: string[]): {
       process.exit(0);
     }
   }
-  return { theme, force, dryRun, model };
+  return { theme, force, dryRun, model, listModels };
+}
+
+/**
+ * Discovery helper: GET the v1beta/models endpoint and print every model
+ * the user's key can call, along with the methods each supports. Lets the
+ * user pick a working `--model=<id>` when the default 404s.
+ */
+async function listModels(apiKey: string): Promise<void> {
+  log(`querying ${API_BASE} for available models`);
+  const res = await fetch(`${API_BASE}?pageSize=200`, {
+    headers: { "X-goog-api-key": apiKey },
+  });
+  if (!res.ok) {
+    fail(`ListModels failed: ${await formatApiError("Gemini", res)}`);
+  }
+  const json = (await res.json()) as {
+    models?: {
+      name?: string;
+      displayName?: string;
+      supportedGenerationMethods?: string[];
+    }[];
+  };
+  const all = json.models ?? [];
+
+  // Sort: image-capable first, then by name.
+  const score = (m: { name?: string; supportedGenerationMethods?: string[] }) => {
+    const name = (m.name ?? "").toLowerCase();
+    const methods = m.supportedGenerationMethods ?? [];
+    const isImagen = name.includes("imagen");
+    const isImageGemini = name.includes("image");
+    const supportsPredict = methods.includes("predict");
+    const supportsGenerate = methods.includes("generateContent");
+    if (isImagen && supportsPredict) return 0;
+    if (isImageGemini && supportsGenerate) return 1;
+    if (supportsGenerate) return 2;
+    return 3;
+  };
+  const sorted = all
+    .slice()
+    .sort((a, b) => score(a) - score(b) || (a.name ?? "").localeCompare(b.name ?? ""));
+
+  console.log("");
+  console.log(`MODEL`.padEnd(54) + "METHODS");
+  console.log("-".repeat(120));
+  for (const m of sorted) {
+    const id = (m.name ?? "").replace(/^models\//, "");
+    const methods = (m.supportedGenerationMethods ?? []).join(", ");
+    console.log(id.padEnd(54) + methods);
+  }
+  console.log("");
+  log(`${sorted.length} models. For image generation pick one whose name`);
+  log(`contains 'image' AND whose methods include 'generateContent', or one`);
+  log(`whose name starts with 'imagen-' AND whose methods include 'predict'.`);
+  log(`Then re-run: npm run assets:gen -- --model=<id>`);
 }
 
 const USAGE = `
@@ -510,10 +580,11 @@ Usage: npm run assets:gen -- [options]
   --theme=apple|vercel   Only process one theme.
   --dry-run              Skip the API; write SVG placeholders only.
   --model=<id>           Override the image-gen model (default ${DEFAULT_MODEL}).
-                         Models starting with "gemini-" use :generateContent
-                         (works on any standard Gemini API key).
-                         Models starting with "imagen-" use :predict
-                         (requires Imagen access on your key).
+                         Models starting with "gemini-" use :generateContent.
+                         Models starting with "imagen-" use :predict.
+  --list-models          Print every model your GEMINI_API_KEY can call
+                         (with the methods each supports) and exit.
+                         Use this when the default model 404s.
   --help, -h             Print this message.
 
 GEMINI_API_KEY must be set in .env to make real API calls.
